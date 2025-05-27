@@ -19,7 +19,7 @@ class LanguagePromptModal extends Modal {
     const { contentEl } = this;
     contentEl.addClass('etymol-language-prompt');
     contentEl.createEl('h2', { text: 'Select Language' });
-    contentEl.createEl('p', { text: `Look up etymology for "${this.selection || 'unknown'}" in:` });
+    contentEl.createEl('p', { text: 'Buscar etimología / Search etymology' });
 
     const buttonContainer = contentEl.createDiv({ cls: 'etymol-button-container' });
 
@@ -76,7 +76,7 @@ class EtymologyLookupModal extends Modal {
         console.error('Etymology lookup error:', error);
       }
     } else {
-      contentEl.setText("Highlight a word in your notes to search its etymology!");
+      contentEl.setText("");
     }
   }
 
@@ -157,7 +157,6 @@ export default class EtymologyLookupPlugin extends Plugin {
 
   async promptAndLookup(selection: string | undefined) {
     if (!selection) {
-      new Notice('Please select a word to look up its etymology.');
       return;
     }
     new LanguagePromptModal(this.app, selection, (lang: 'en' | 'es') => {
