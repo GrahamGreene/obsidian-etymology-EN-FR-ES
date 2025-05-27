@@ -191,7 +191,7 @@ async function fetchSpanishEtymologyDeChile(word: string): Promise<string | null
     const response = await requestUrl({ url });
     if (response.status !== 200) return null;
 
-    const buffer = await response.arrayBuffer();
+    const buffer = response.arrayBuffer;
     const text = new TextDecoder("latin1").decode(new Uint8Array(buffer));
 
     const parser = new DOMParser();
@@ -268,12 +268,12 @@ async function fetchFrenchEtymologyCNRTL(word: string): Promise<string | null> {
     if (!etymologyDiv) return null;
 
     let etymologyText = "";
-    let currentElement = etymologyDiv.parentElement;
+    let currentElement: HTMLElement | null = etymologyDiv.parentElement as HTMLElement;
 
     while (currentElement && currentElement.id !== "contentbox") {
       const text = currentElement.textContent?.trim();
       if (text) etymologyText += text + "\n";
-      currentElement = currentElement.nextElementSibling;
+      currentElement = currentElement.nextElementSibling as HTMLElement | null;
     }
 
     return cleanText(normalizeText(etymologyText)) || null;
@@ -294,7 +294,7 @@ function normalizeText(text: string): string {
     .replace(/Ã­/g, "í")
     .replace(/Ã³/g, "ó")
     .replace(/Ãº/g, "ú")
-    .replace(/Ã±/g, "ñ")
+    .replace(/Ãñ/g, "ñ")
     .replace(/Ã/g, "Á")
     .replace(/Ã‰/g, "É")
     .replace(/Ã/g, "Í")
