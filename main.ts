@@ -1,4 +1,4 @@
-import { App, Modal, Plugin, Notice, requestUrl } from "obsidian";
+import { App, Modal, Plugin, requestUrl } from "obsidian";
 import { Etymo } from "./lib/etymo-js";
 import { displayEntries } from "./util/displayEntries";
 import { ellipsis } from "./util/ellipsis";
@@ -137,9 +137,10 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
     const parser = new DOMParser();
     const doc = parser.parseFromString(response.text, 'text/html');
 
-    const etymDiv = doc.querySelector('div.etim');
-    if (etymDiv) {
-      return etymDiv.textContent?.trim() || null;
+    // Buscar el span.etimologia dentro de div.etim
+    const etymSpan = doc.querySelector('div.etim span.etimologia');
+    if (etymSpan) {
+      return etymSpan.textContent?.trim() || null;
     }
 
     return null;
