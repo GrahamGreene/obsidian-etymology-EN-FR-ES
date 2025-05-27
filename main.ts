@@ -168,8 +168,13 @@ function getCurrentSelectedText(app: App): string {
   const editor = app.workspace.activeEditor?.editor;
   if (editor) {
     const selection = editor.getSelection();
-    if (selection) return selection.trim();
+    if (typeof selection === 'string' && selection.trim().length > 0) {
+      return selection.trim();
+    }
   }
-  const selection = document.getSelection()?.toString().trim();
-  return selection || '';
+  const selection = document.getSelection();
+  if (selection && typeof selection.toString === 'function') {
+    return selection.toString().trim();
+  }
+  return '';
 }
