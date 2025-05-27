@@ -166,7 +166,7 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
   try {
     const url = `https://dle.rae.es/${encodeURIComponent(word)}`;
     const response = await requestUrl({ url });
-    if (response.status !== 200)unis return null;
+    if (response.status !== 200) return null;
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(response.text, "text/html");
