@@ -66,7 +66,7 @@ class EtymologyLookupModal extends Modal {
         } else {
           const etymology = await fetchSpanishEtymologyDPD(searchTerm);
           if (etymology) {
-            contentEl.setText(etymology);
+            contentEl.setText(`"${searchTerm}":\n\n${etymology}`);
           } else {
             contentEl.setText(`No etymology or definition found for "${searchTerm}".`);
           }
