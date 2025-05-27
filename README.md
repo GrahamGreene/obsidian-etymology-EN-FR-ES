@@ -1,50 +1,51 @@
-# Etymology Lookup
+obsidian-etymology-bilingual
 
-Lookup the etymology of English words in your [Obsidian](https://obsidian.md/) notes.
+Lookup the etymology of words in your Obsidian notes, supporting both English and Spanish.
 
-This plugin fetches results from Douglas Harper's fantastic [Online Etymology Dictionary](https://www.etymonline.com) and therefore requires internet connection. Consider thanking Douglas for this wonderful resource with a [donation](https://www.paypal.com/donate/?cmd=_donations&business=byronic106@yahoo.com&lc=US&item_name=Donation+to%20+Help+Keep+Etymonline+Free+and+Open&no_note=0&cn=&curency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted).
+This plugin is a fork of Etymology Lookup by Claire Froelich (Copyright (c) 2024), licensed under the MIT License.
 
-[Install](https://obsidian.md/plugins?search=etymology%20lookup) plugin for Obsidian 
+It fetches English etymology results from Douglas Harper’s excellent Online Etymology Dictionary and Spanish etymology from the Diccionario panhispánico de dudas (DPD) by RAE. An internet connection is required.
 
-### Great for
+You can select the language before each search to get etymology in English or Spanish.
 
-🌱 ESL learners
+Great for
 
-🌱 Studying law, medicine, botany, chemistry, physics, philosophy, linguistics, architecture and more
+🌱 Bilingual learners and researchers
+🌱 Studying languages, law, medicine, sciences, philosophy, linguistics, architecture, and more
+🌱 Enhancing the clarity and depth of your writing
+🌱 Anyone curious about the origins of words in English and Spanish
 
-🌱 Enhancing the clarity of your writing
+How to use
+	1.	Highlight a word or phrase in your notes
+	2.	Press the plugin button or run the search command
+	3.	Select the language (English or Español) when prompted
+	4.	View etymology results; click an entry to copy it (optional)
 
-🌱 Nerds just plain curious about language history and word origins
+Installation
 
-## How to use
+Install from the Obsidian community plugins browser by searching for obsidian-etymology-bilingual.
 
-1. Highlight all or part of a word in your notes
-2. Run search
-3. (Optional) Click or tap an entry to copy it to your clipboard
+Original Author and License
 
-![demo1](https://github.com/clairefro/assets/blob/main/obsidian-plugin-etymology-lookup/demo1.gif?raw=true)
+This plugin is based on Etymology Lookup by Claire Froelich, licensed under the MIT License:
 
-There are three ways to run Etyomology Lookup
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the “Software”), to deal
+in the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-#### Run via ribbon menu
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Hit the "sprout" icon in the left ribbon
-![demo ribbon](https://github.com/clairefro/assets/blob/main/obsidian-plugin-etymology-lookup/demo-ribbon.gif?raw=true)
+See the original license file for full details.
 
-#### Run via Command Palette
+Contribute
 
-(`Cmd` + `P`): "Etymology Lookup - Search"
+Bug reports, feature requests, and pull requests are welcome.
 
-![demo command palette](https://github.com/clairefro/assets/blob/main/obsidian-plugin-etymology-lookup/demo-cp.gif)
+Support
 
-#### Run from right-click menu
+If you find this plugin useful, consider supporting the original author via their Buy Me a Coffee page.
 
-<img width="777" alt="image" src="https://github.com/clairefro/obsidian-plugin-etymology-lookup/assets/9841162/b7145d12-e23c-4f35-9aba-682df162a857">
-
-## Contribute
-
-Contributions via bug reports, feature requests and pull requests are welcome
-
-## Support
-
-<a href="https://www.buymeacoffee.com/clairefro"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a potato&emoji=🍠&slug=clairefro&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
