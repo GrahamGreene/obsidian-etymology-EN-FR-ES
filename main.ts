@@ -160,15 +160,11 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
 async function fetchSpanishEtymologyDeChile(word: string): Promise<string | null> {
   try {
     const url = `https://etimologias.dechile.net/?${encodeURIComponent(word)}`;
-    const response = await requestUrl({ url, responseType: 'arraybuffer' });
+    const response = await requestUrl({ url });
     if (response.status !== 200) return null;
 
-    // Decodificar explícitamente en iso-8859-1 para evitar símbolos extraños en tildes
-    const decoder = new TextDecoder('iso-8859-1');
-    const text = decoder.decode(response.arrayBuffer);
-
     const parser = new DOMParser();
-    const doc = parser.parseFromString(text, 'text/html');
+    const doc = parser.parseFromString(response.text, 'text/html');
 
     const h3Elements = Array.from(doc.querySelectorAll('h3'));
     let targetH3: Element | null = null;
