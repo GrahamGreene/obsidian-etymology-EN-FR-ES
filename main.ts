@@ -1,4 +1,4 @@
-import { App, Modal, Plugin, requestUrl } from "obsidian";
+import { App, Modal, Plugin } from "obsidian";
 import { Etymo } from "./lib/etymo-js";
 import { displayEntries } from "./util/displayEntries";
 import { ellipsis } from "./util/ellipsis";
@@ -106,11 +106,12 @@ class EtymologyLookupModal extends Modal {
 async function fetchSpanishEtymologyDPD(word: string): Promise<string | null> {
   try {
     const url = `https://www.rae.es/dpd/${encodeURIComponent(word)}`;
-    const response = await requestUrl({ url });
-    if (response.status !== 200) return null;
+    const response = await fetch(url);
+    if (!response.ok) return null;
 
+    const text = await response.text();
     const parser = new DOMParser();
-    const doc = parser.parseFromString(response.text, 'text/html');
+    const doc = parser.parseFromString(text, 'text/html');
 
     const sections = Array.from(doc.querySelectorAll('section'));
     for (const section of sections) {
@@ -137,11 +138,12 @@ async function fetchSpanishEtymologyDPD(word: string): Promise<string | null> {
 async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
   try {
     const url = `https://dle.rae.es/${encodeURIComponent(word)}`;
-    const response = await requestUrl({ url });
-    if (response.status !== 200) return null;
+    const response = await fetch(url);
+    if (!response.ok) return null;
 
+    const text = await response.text();
     const parser = new DOMParser();
-    const doc = parser.parseFromString(response.text, 'text/html');
+    const doc = parser.parseFromString(text, 'text/html');
 
     const section = doc.querySelector('section.c-section');
     if (section) {
@@ -160,11 +162,12 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
 async function fetchSpanishEtymologyDeChile(word: string): Promise<string | null> {
   try {
     const url = `https://etimologias.dechile.net/?${encodeURIComponent(word)}`;
-    const response = await requestUrl({ url });
-    if (response.status !== 200) return null;
+    const response = await fetch(url);
+    if (!response.ok) return null;
 
+    const text = await response.text();
     const parser = new DOMParser();
-    const doc = parser.parseFromString(response.text, 'text/html');
+    const doc = parser.parseFromString(text, 'text/html');
 
     const h3Elements = Array.from(doc.querySelectorAll('h3'));
     let targetH3: Element | null = null;
