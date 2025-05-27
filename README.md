@@ -43,6 +43,4 @@ See the original license file for full details.
 
 Bug reports, feature requests, and pull requests are welcome.
 
-## Support
 
-If you find this plugin useful, consider supporting the original author via their [Buy Me a Coffee page](https://www.buymeacoffee.com/clairefro).
