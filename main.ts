@@ -66,9 +66,9 @@ class EtymologyLookupModal extends Modal {
             contentEl.setText(`No etymology found for "${searchTerm}".`);
           }
         }
-      } catch (_e) {
+      } catch (error) {
         contentEl.setText("Search failed. Are you connected to the internet?");
-        console.error('Etymology lookup error:', _e);
+        console.error('Etymology lookup error:', error);
       }
     } else {
       contentEl.setText("Highlight a word in your notes to search its etymology!");
@@ -83,8 +83,8 @@ class EtymologyLookupModal extends Modal {
 async function fetchSpanishEtymology(word: string): Promise<string | null> {
   try {
     const normalizedWord = word.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    // URL corregida con query string
-    const url = `https://etimologias.dechile.net/?${encodeURIComponent(normalizedWord)}`;
+    // URL corregida: el término va como query string en "q"
+    const url = `https://etimologias.dechile.net/?q=${encodeURIComponent(normalizedWord)}`;
 
     const response = await requestUrl({ url });
     if (response.status !== 200) return null;
@@ -95,7 +95,7 @@ async function fetchSpanishEtymology(word: string): Promise<string | null> {
     const contenido = doc.querySelector('#contenido');
     if (!contenido) return null;
 
-    // Extraemos los párrafos con texto relevante
+    // Extraemos los párrafos que contienen la etimología
     const paragraphs = contenido.querySelectorAll('p');
     let etymologyText = '';
     paragraphs.forEach(p => {
