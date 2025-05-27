@@ -110,14 +110,14 @@ async function fetchSpanishEtymology(word: string): Promise<string | null> {
     if (!content) content = doc.querySelector('.entry-content');
     if (!content) content = doc.querySelector('main');
     if (!content) {
-      // Fallback: get all <p> tags in the main content area
+      // Fallback: get all <p> tags in the body
       content = doc.querySelector('body');
       if (content) {
         const paragraphs = content.querySelectorAll('p');
         let text = '';
         paragraphs.forEach(p => {
           const pText = p.textContent?.trim();
-          if (pText && pText.length > 20) { // Avoid short or irrelevant paragraphs
+          if (pText && pText.length > 20) {
             text += pText + '\n\n';
           }
         });
@@ -169,10 +169,12 @@ export default class EtymologyLookupPlugin extends Plugin {
         console.log('Context menu opened, selection:', selection);
         if (selection) {
           menu.addItem((item) => {
-            item.setTitle(`Get etymology of "${ellipsis(selection, 18)}"`).onClick(() => {
-              console.log('Context menu item clicked, selection:', selection);
-              this.promptAndLookup(selection);
-            });
+            item
+              .setTitle(`Get etymology of "${ellipsis(selection, 18)}"`)
+              .onClick(() => {
+                console.log('Context menu item clicked, selection:', selection);
+                this.promptAndLookup(selection);
+              });
           });
         }
       })
