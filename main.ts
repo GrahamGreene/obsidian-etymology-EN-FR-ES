@@ -7,9 +7,9 @@ const etymo = new Etymo();
 
 class LanguagePromptModal extends Modal {
   selection: string | undefined;
-  onSubmit: (lang: 'en' | 'es') => void;
+  onSubmit: (lang: 'en' | 'es' | 'fr') => void;
 
-  constructor(app: App, selection: string | undefined, onSubmit: (lang: 'en' | 'es') => void) {
+  constructor(app: App, selection: string | undefined, onSubmit: (lang: 'en' | 'es' | 'fr') => void) {
     super(app);
     this.selection = selection;
     this.onSubmit = onSubmit;
@@ -19,7 +19,7 @@ class LanguagePromptModal extends Modal {
     const { contentEl } = this;
     contentEl.addClass('etymol-language-prompt');
     contentEl.createEl('h2', { text: 'Select Language' });
-    contentEl.createEl('p', { text: 'Search etymology / Buscar etimología' });
+    contentEl.createEl('p', { text: 'Search etymology / Buscar etimología / Rechercher l'étymologie' });
 
     const buttonContainer = contentEl.createDiv({ cls: 'etymol-button-container' });
 
@@ -31,8 +31,15 @@ class LanguagePromptModal extends Modal {
     });
 
     const spanishButton = buttonContainer.createEl('button', { text: 'Español' });
+    spanishButton.style.marginRight = '12px';
     spanishButton.addEventListener('click', () => {
       this.onSubmit('es');
+      this.close();
+    });
+
+    const frenchButton = buttonContainer.createEl('button', { text: 'Français' });
+    frenchButton.addEventListener('click', () => {
+      this.onSubmit('fr');
       this.close();
     });
   }
@@ -44,9 +51,9 @@ class LanguagePromptModal extends Modal {
 
 class EtymologyLookupModal extends Modal {
   data: string | undefined;
-  lang: 'en' | 'es';
+  lang: 'en' | 'es' | 'fr';
 
-  constructor(app: App, data: string | undefined, lang: 'en' | 'es') {
+  constructor(app: App, data: string | undefined, lang: 'en' | 'es' | 'fr') {
     super(app);
     this.data = data;
     this.lang = lang;
@@ -63,7 +70,7 @@ class EtymologyLookupModal extends Modal {
         if (this.lang === 'en') {
           const entries = await etymo.search(searchTerm);
           displayEntries(entries, contentEl, searchTerm);
-        } else {
+        } else if (this.lang === 'es') {
           const [etymDPD, etymDLE, etymDeChile] = await Promise.all([
             fetchSpanishEtymologyDPD(searchTerm),
             fetchSpanishEtymologyDLE(searchTerm),
@@ -88,6 +95,25 @@ class EtymologyLookupModal extends Modal {
           const deChileText = contentEl.createEl('div');
           deChileText.style.whiteSpace = 'pre-wrap';
           deChileText.setText(etymDeChile ?? 'No se ha encontrado la etimología.');
+        } else if (this.lang === 'fr') {
+          const [etymWiktionary, etymCNRTL] = await Promise.all([
+            fetchFrenchEtymologyWiktionary(searchTerm),
+            fetchFrenchEtymologyCNRTL(searchTerm)
+          ]);
+
+          contentEl.empty();
+          const wordEl = contentEl.createEl('h2', { text: searchTerm });
+          wordEl.style.marginBottom = '1em';
+
+          const wiktionaryHeader = contentEl.createEl('h3', { text: 'Source: Wiktionnaire' });
+          const wiktionaryText = contentEl.createEl('div');
+          wiktionaryText.style.whiteSpace = 'pre-wrap';
+          wiktionaryText.setText(etymWiktionary ?? 'Aucune étymologie trouvée.');
+
+          const cnrtlHeader = contentEl.createEl('h3', { text: 'Source: CNRTL' });
+          const cnrtlText = contentEl.createEl('div');
+          cnrtlText.style.whiteSpace = 'pre-wrap';
+          cnrtlText.setText(etymCNRTL ?? 'Aucune étymologie trouvée.');
         }
       } catch (error) {
         contentEl.setText("Search failed. Are you connected to the internet?");
@@ -157,35 +183,6 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
   }
 }
 
-function normalizeText(text: string): string {
-  const textarea = document.createElement('textarea');
-  textarea.innerHTML = text;
-  let normalized = textarea.value;
-
-  normalized = normalized
-    .replace(/Ã¡/g, 'á')
-    .replace(/Ã©/g, 'é')
-    .replace(/Ã­/g, 'í')
-    .replace(/Ã³/g, 'ó')
-    .replace(/Ãº/g, 'ú')
-    .replace(/Ã±/g, 'ñ')
-    .replace(/Ã/g, 'Á')
-    .replace(/Ã‰/g, 'É')
-    .replace(/Ã/g, 'Í')
-    .replace(/Ã“/g, 'Ó')
-    .replace(/Ãš/g, 'Ú')
-    .replace(/Ã‘/g, 'Ñ');
-
-  return normalized;
-}
-
-function cleanText(text: string): string {
-  return text
-    .replace(/\s+/g, ' ')         // Reemplaza múltiples espacios por uno solo
-    .replace(/(\r?\n){2,}/g, '\n\n') // Máximo dos saltos de línea seguidos
-    .trim();
-}
-
 async function fetchSpanishEtymologyDeChile(word: string): Promise<string | null> {
   try {
     const url = `https://etimologias.dechile.net/?${encodeURIComponent(word)}`;
@@ -226,6 +223,106 @@ async function fetchSpanishEtymologyDeChile(word: string): Promise<string | null
   }
 }
 
+async function fetchFrenchEtymologyWiktionary(word: string): Promise<string | null> {
+  try {
+    const url = `https://fr.wiktionary.org/wiki/${encodeURIComponent(word)}`;
+    const response = await requestUrl({ url });
+    if (response.status !== 200) return null;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(response.text, 'text/html');
+
+    const etymologySection = doc.querySelector('#Étymologie,Etymologie');
+    if (!etymologySection) return null;
+
+    let etymologyText = '';
+    let nextElement = etymologySection.nextElementSibling;
+
+    while (nextElement && nextElement.tagName.toLowerCase() !== 'h2' && nextElement.tagName.toLowerCase() !== 'h3') {
+      const text = nextElement.textContent?.trim();
+      if (text) etymologyText += text + '\n';
+      nextElement = nextElement.nextElementSibling;
+    }
+
+    return cleanText(normalizeText(etymologyText)) || null;
+  } catch (error) {
+    console.error('Error fetching French etymology from Wiktionnaire:', error);
+    return null;
+  }
+}
+
+async function fetchFrenchEtymologyCNRTL(word: string): Promise<string | null> {
+  try {
+    const url = `https://www.cnrtl.fr/etymologie/${encodeURIComponent(word)}`;
+    const response = await requestUrl({ url });
+    if (response.status !== 200) return null;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(response.text, 'text/html');
+
+    const etymologyDiv = doc.querySelector('div.tlf_cvedette + b');
+    if (!etymologyDiv) return null;
+
+    let etymologyText = '';
+    let currentElement = etymologyDiv.parentElement;
+
+    while (currentElement && currentElement.id !== 'contentbox') {
+      const text = currentElement.textContent?.trim();
+      if (text) etymologyText += text + '\n';
+      currentElement = currentElement.nextElementSibling;
+    }
+
+    return cleanText(normalizeText(etymologyText)) || null;
+  } catch (error) {
+    console.error('Error fetching French etymology from CNRTL:', error);
+    return null;
+  }
+}
+
+function normalizeText(text: string): string {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  let normalized = textarea.value;
+
+  normalized = normalized
+    .replace(/Ã¡/g, 'á')
+    .replace(/Ã©/g, 'é')
+    .replace(/Ã­/g, 'í')
+    .replace(/Ã³/g, 'ó')
+    .replace(/Ãº/g, 'ú')
+    .replace(/Ã±/g, 'ñ')
+    .replace(/Ã/g, 'Á')
+    .replace(/Ã‰/g, 'É')
+    .replace(/Ã/g, 'Í')
+    .replace(/Ã“/g, 'Ó')
+    .replace(/Ãš/g, 'Ú')
+    .replace(/Ã‘/g, 'Ñ')
+    .replace(/Ã¢/g, 'â')
+    .replace(/Ã¨/g, 'è')
+    .replace(/Ãª/g, 'ê')
+    .replace(/Ã®/g, 'î')
+    .replace(/Ã´/g, 'ô')
+    .replace(/Ã»/g, 'û')
+    .replace(/Ã§/g, 'ç')
+    .replace(/Ã€/g, 'À')
+    .replace(/Ã‚/g, 'Â')
+    .replace(/Ãˆ/g, 'È')
+    .replace(/ÃŠ/g, 'Ê')
+    .replace(/ÃŽ/g, 'Î')
+    .replace(/Ã”/g, 'Ô')
+    .replace(/Ã›/g, 'Û')
+    .replace(/Ã‡/g, 'Ç');
+
+  return normalized;
+}
+
+function cleanText(text: string): string {
+  return text
+    .replace(/\s+/g, ' ')
+    .replace(/(\r?\n){2,}/g, '\n\n')
+    .trim();
+}
+
 export default class EtymologyLookupPlugin extends Plugin {
   async onload() {
     this.addRibbonIcon("sprout", "Etymology Lookup", () => {
@@ -260,7 +357,7 @@ export default class EtymologyLookupPlugin extends Plugin {
 
   async promptAndLookup(selection: string | undefined) {
     if (!selection) return;
-    new LanguagePromptModal(this.app, selection, (lang: 'en' | 'es') => {
+    new LanguagePromptModal(this.app, selection, (lang: 'en' | 'es' | 'fr') => {
       const modal = new EtymologyLookupModal(this.app, selection, lang);
       modal.open();
     }).open();
