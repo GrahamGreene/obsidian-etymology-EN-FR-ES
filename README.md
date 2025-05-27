@@ -1,6 +1,6 @@
-# obsidian-plugin-etymology-bilingual
+# obsidian-etymology-EN-FR-ES
 
-Etymology Lookup EN, FR, and SP
+Etymology Lookup EN, FR, and ES
 
 Lookup the etymology of words in your Obsidian notes, supporting English, French, and Spanish.
 
@@ -26,7 +26,7 @@ You can select the language before each search to get etymology in English, Fren
 
 ## Installation
 
-Install from the Obsidian community plugins browser by searching for **obsidian-plugin-etymology-bilingual**.
+Install from the Obsidian community plugins browser by searching for **obsidian-etymology-EN-FR-ES**.
 
 ## Original Author and License
 
