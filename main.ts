@@ -87,7 +87,7 @@ class EtymologyLookupModal extends Modal {
 async function fetchSpanishEtymology(word: string): Promise<string | null> {
   try {
     const normalizedWord = word.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const url = `https://etimologias.dechile.net/?${encodeURIComponent(normalizedWord)}`;
+    const url = `https://etimologias.dechile.net/${encodeURIComponent(normalizedWord)}`;
     console.log('Fetching Spanish etymology for:', normalizedWord, 'URL:', url);
 
     const response = await requestUrl({ url });
@@ -161,7 +161,7 @@ export default class EtymologyLookupPlugin extends Plugin {
         console.log('Command triggered, selection:', selection);
         this.promptAndLookup(selection);
       },
-    );
+    });
 
     this.registerEvent(
       this.app.workspace.on("editor-menu", (menu, editor) => {
