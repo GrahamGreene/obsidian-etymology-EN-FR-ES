@@ -6,7 +6,7 @@ Lookup the etymology of words in your Obsidian notes, supporting both English an
 
 This plugin is a fork of *Etymology Lookup* by Claire Froelich (Copyright (c) 2024), licensed under the MIT License.
 
-It fetches English etymology results from Douglas Harper’s excellent [Online Etymology Dictionary](https://www.etymonline.com) and Spanish etymology from the *Diccionario panhispánico de dudas* (DPD) by RAE. An internet connection is required.
+It fetches English etymology results from Douglas Harper’s excellent [Online Etymology Dictionary](https://www.etymonline.com) and Spanish etymology from the *Diccionario panhispánico de dudas* (DPD), the *Diccionario de la lengua española* (DLE), and *Etimologías de Chile*. An internet connection is required.
 
 You can select the language before each search to get etymology in English or Spanish.
 
@@ -42,5 +42,3 @@ See the original license file for full details.
 ## Contribute
 
 Bug reports, feature requests, and pull requests are welcome.
-
-
