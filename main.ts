@@ -64,9 +64,10 @@ class EtymologyLookupModal extends Modal {
           const entries = await etymo.search(searchTerm);
           displayEntries(entries, contentEl, searchTerm);
         } else {
-          const [etymDPD, etymDLE] = await Promise.all([
+          const [etymDPD, etymDLE, etymDeChile] = await Promise.all([
             fetchSpanishEtymologyDPD(searchTerm),
-            fetchSpanishEtymologyDLE(searchTerm)
+            fetchSpanishEtymologyDLE(searchTerm),
+            fetchSpanishEtymologyDeChile(searchTerm)
           ]);
 
           contentEl.empty();
@@ -82,6 +83,11 @@ class EtymologyLookupModal extends Modal {
           const dleText = contentEl.createEl('div');
           dleText.style.whiteSpace = 'pre-wrap';
           dleText.setText(etymDLE ?? 'No se ha encontrado la etimología.');
+
+          const deChileHeader = contentEl.createEl('h3', { text: 'Fuente: Diccionario Etimológico de Chile' });
+          const deChileText = contentEl.createEl('div');
+          deChileText.style.whiteSpace = 'pre-wrap';
+          deChileText.setText(etymDeChile ?? 'No se ha encontrado la etimología.');
         }
       } catch (error) {
         contentEl.setText("Search failed. Are you connected to the internet?");
@@ -147,6 +153,45 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
     return null;
   } catch (error) {
     console.error('Error fetching Spanish etymology from DLE:', error);
+    return null;
+  }
+}
+
+async function fetchSpanishEtymologyDeChile(word: string): Promise<string | null> {
+  try {
+    const url = `https://etimologias.dechile.net/?${encodeURIComponent(word)}`;
+    const response = await requestUrl({ url });
+    if (response.status !== 200) return null;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(response.text, 'text/html');
+
+    const h3Elements = Array.from(doc.querySelectorAll('h3'));
+    let targetH3: Element | null = null;
+
+    for (const h3 of h3Elements) {
+      if (h3.textContent?.trim().toLowerCase() === word.toLowerCase()) {
+        targetH3 = h3;
+        break;
+      }
+    }
+
+    if (!targetH3) return null;
+
+    let etymologyTexts: string[] = [];
+    let sibling = targetH3.nextElementSibling;
+
+    while (sibling && sibling.tagName.toLowerCase() === 'p') {
+      const text = sibling.textContent?.trim();
+      if (text) etymologyTexts.push(text);
+      sibling = sibling.nextElementSibling;
+    }
+
+    if (etymologyTexts.length === 0) return null;
+
+    return etymologyTexts.join('\n\n');
+  } catch (error) {
+    console.error('Error fetching Spanish etymology from DeChile:', error);
     return null;
   }
 }
