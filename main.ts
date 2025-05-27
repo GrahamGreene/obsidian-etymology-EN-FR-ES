@@ -23,12 +23,10 @@ class LanguagePromptModal extends Modal {
 
     const buttonContainer = contentEl.createDiv({ cls: 'etymol-button-container' });
     buttonContainer.createEl('button', { text: 'English' }).addEventListener('click', () => {
-      console.log('User selected English for:', this.selection);
       this.onSubmit('en');
       this.close();
     });
     buttonContainer.createEl('button', { text: 'Spanish' }).addEventListener('click', () => {
-      console.log('User selected Spanish for:', this.selection);
       this.onSubmit('es');
       this.close();
     });
@@ -54,8 +52,6 @@ class EtymologyLookupModal extends Modal {
     contentEl.setText("Searching...");
     contentEl.className = "etymol-modal-content";
 
-    console.log('Etymology lookup for:', this.data, 'in language:', this.lang);
-
     if (this.data) {
       try {
         const searchTerm = this.data.trim().toLowerCase();
@@ -70,9 +66,9 @@ class EtymologyLookupModal extends Modal {
             contentEl.setText(`No etymology found for "${searchTerm}".`);
           }
         }
-      } catch (_e) {
+      } catch (e) {
         contentEl.setText("Search failed. Are you connected to the internet?");
-        console.error('Etymology lookup error:', _e);
+        console.error('Etymology lookup error:', e);
       }
     } else {
       contentEl.setText("Highlight a word in your notes to search its etymology!");
@@ -88,51 +84,29 @@ async function fetchSpanishEtymology(word: string): Promise<string | null> {
   try {
     const normalizedWord = word.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const url = `https://etimologias.dechile.net/${encodeURIComponent(normalizedWord)}`;
-    console.log('Fetching Spanish etymology for:', normalizedWord, 'URL:', url);
 
     const response = await requestUrl({ url });
-    console.log('HTTP status:', response.status);
 
-    if (response.status !== 200) {
-      console.log('Spanish etymology fetch failed, status:', response.status);
-      return null;
-    }
+    if (response.status !== 200) return null;
 
     const html = response.text;
-    console.log('Raw HTML length:', html.length);
-
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
-    // Try multiple selectors to find the etymology content
-    let content: Element | null = doc.querySelector('#contenido');
-    if (!content) content = doc.querySelector('.cont');
-    if (!content) content = doc.querySelector('.entry-content');
-    if (!content) content = doc.querySelector('main');
-    if (!content) {
-      // Fallback: get all <p> tags in the body
-      content = doc.querySelector('body');
-      if (content) {
-        const paragraphs = content.querySelectorAll('p');
-        let text = '';
-        paragraphs.forEach(p => {
-          const pText = p.textContent?.trim();
-          if (pText && pText.length > 20) {
-            text += pText + '\n\n';
-          }
-        });
-        if (text) return text.trim();
+    const contenidoDiv = doc.querySelector('#contenido');
+    if (!contenidoDiv) return null;
+
+    const paragraphs = contenidoDiv.querySelectorAll('p');
+    let etymologyText = '';
+    paragraphs.forEach(p => {
+      const text = p.textContent?.trim();
+      if (text && text.length > 20) {
+        etymologyText += text + '\n\n';
       }
-    }
+    });
 
-    if (!content) {
-      console.log('No etymology content found for:', normalizedWord);
-      return null;
-    }
+    return etymologyText.trim() || null;
 
-    const text = content.textContent?.trim();
-    console.log('Extracted text length:', text?.length || 0);
-    return text || null;
   } catch (e) {
     console.error('Error fetching Spanish etymology:', e);
     return null;
@@ -141,14 +115,11 @@ async function fetchSpanishEtymology(word: string): Promise<string | null> {
 
 export default class EtymologyLookupPlugin extends Plugin {
   async onload() {
-    console.log("Loading Etymology Lookup plugin");
-
     this.addRibbonIcon(
       "sprout",
       "Etymology Lookup",
       (event: MouseEvent) => {
         const selection = getCurrentSelectedText(this.app);
-        console.log('Ribbon icon clicked, selection:', selection);
         this.promptAndLookup(selection);
       }
     );
@@ -158,7 +129,6 @@ export default class EtymologyLookupPlugin extends Plugin {
       name: "Search Etymology",
       callback: () => {
         const selection = getCurrentSelectedText(this.app);
-        console.log('Command triggered, selection:', selection);
         this.promptAndLookup(selection);
       },
     });
@@ -166,13 +136,11 @@ export default class EtymologyLookupPlugin extends Plugin {
     this.registerEvent(
       this.app.workspace.on("editor-menu", (menu, editor) => {
         const selection = editor.getSelection();
-        console.log('Context menu opened, selection:', selection);
         if (selection) {
           menu.addItem((item) => {
             item
               .setTitle(`Get etymology of "${ellipsis(selection, 18)}"`)
               .onClick(() => {
-                console.log('Context menu item clicked, selection:', selection);
                 this.promptAndLookup(selection);
               });
           });
@@ -199,11 +167,8 @@ function getCurrentSelectedText(app: App): string {
   const editor = app.workspace.activeEditor?.editor;
   if (editor) {
     const selection = editor.getSelection();
-    console.log('Editor selection:', selection);
     if (selection) return selection.trim();
   }
-
   const selection = document.getSelection()?.toString().trim();
-  console.log('Document selection:', selection);
   return selection || '';
 }
