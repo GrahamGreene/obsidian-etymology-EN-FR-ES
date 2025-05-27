@@ -66,9 +66,9 @@ class EtymologyLookupModal extends Modal {
             contentEl.setText(`No etymology found for "${searchTerm}".`);
           }
         }
-      } catch (e) {
+      } catch (_e) {
         contentEl.setText("Search failed. Are you connected to the internet?");
-        console.error('Etymology lookup error:', e);
+        console.error('Etymology lookup error:', _e);
       }
     } else {
       contentEl.setText("Highlight a word in your notes to search its etymology!");
@@ -89,26 +89,26 @@ async function fetchSpanishEtymology(word: string): Promise<string | null> {
 
     if (response.status !== 200) return null;
 
-    const html = response.text;
     const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    const doc = parser.parseFromString(response.text, 'text/html');
 
-    const contenidoDiv = doc.querySelector('#contenido');
-    if (!contenidoDiv) return null;
+    const contenido = doc.querySelector('#contenido');
+    if (!contenido) return null;
 
-    const paragraphs = contenidoDiv.querySelectorAll('p');
+    const paragraphs = contenido.querySelectorAll('p');
     let etymologyText = '';
     paragraphs.forEach(p => {
       const text = p.textContent?.trim();
-      if (text && text.length > 20) {
+      if (text && text.length > 40) {
         etymologyText += text + '\n\n';
       }
     });
 
-    return etymologyText.trim() || null;
+    if (etymologyText.length === 0) return null;
 
-  } catch (e) {
-    console.error('Error fetching Spanish etymology:', e);
+    return etymologyText.trim();
+  } catch (error) {
+    console.error('Error fetching Spanish etymology:', error);
     return null;
   }
 }
@@ -118,7 +118,7 @@ export default class EtymologyLookupPlugin extends Plugin {
     this.addRibbonIcon(
       "sprout",
       "Etymology Lookup",
-      (event: MouseEvent) => {
+      () => {
         const selection = getCurrentSelectedText(this.app);
         this.promptAndLookup(selection);
       }
