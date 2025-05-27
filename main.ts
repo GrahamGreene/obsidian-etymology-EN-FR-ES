@@ -58,7 +58,7 @@ class EtymologyLookupModal extends Modal {
 
     if (this.data) {
       try {
-        const searchTerm = this.data.trim();
+        const searchTerm = this.data.trim().toLowerCase();
         if (this.lang === 'en') {
           const entries = await etymo.search(searchTerm);
           displayEntries(entries, contentEl, searchTerm);
@@ -86,23 +86,53 @@ class EtymologyLookupModal extends Modal {
 
 async function fetchSpanishEtymology(word: string): Promise<string | null> {
   try {
-    const url = `https://etimologias.dechile.net/?${encodeURIComponent(word)}`;
+    const normalizedWord = word.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const url = `https://etimologias.dechile.net/?${encodeURIComponent(normalizedWord)}`;
+    console.log('Fetching Spanish etymology for:', normalizedWord, 'URL:', url);
+
     const response = await requestUrl({ url });
+    console.log('HTTP status:', response.status);
+
     if (response.status !== 200) {
       console.log('Spanish etymology fetch failed, status:', response.status);
       return null;
     }
 
     const html = response.text;
+    console.log('Raw HTML length:', html.length);
+
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    const contenido = doc.querySelector('#contenido') ?? doc.querySelector('.cont');
-    if (!contenido) {
-      console.log('No etymology content found for:', word);
+
+    // Try multiple selectors to find the etymology content
+    let content: Element | null = doc.querySelector('#contenido');
+    if (!content) content = doc.querySelector('.cont');
+    if (!content) content = doc.querySelector('.entry-content');
+    if (!content) content = doc.querySelector('main');
+    if (!content) {
+      // Fallback: get all <p> tags in the main content area
+      content = doc.querySelector('body');
+      if (content) {
+        const paragraphs = content.querySelectorAll('p');
+        let text = '';
+        paragraphs.forEach(p => {
+          const pText = p.textContent?.trim();
+          if (pText && pText.length > 20) { // Avoid short or irrelevant paragraphs
+            text += pText + '\n\n';
+          }
+        });
+        if (text) return text.trim();
+      }
+    }
+
+    if (!content) {
+      console.log('No etymology content found for:', normalizedWord);
       return null;
     }
 
-    return contenido.textContent?.trim() ?? null;
+    const text = content.textContent?.trim();
+    console.log('Extracted text length:', text?.length || 0);
+    return text || null;
   } catch (e) {
     console.error('Error fetching Spanish etymology:', e);
     return null;
@@ -131,7 +161,7 @@ export default class EtymologyLookupPlugin extends Plugin {
         console.log('Command triggered, selection:', selection);
         this.promptAndLookup(selection);
       },
-    });
+    );
 
     this.registerEvent(
       this.app.workspace.on("editor-menu", (menu, editor) => {
