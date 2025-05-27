@@ -64,18 +64,24 @@ class EtymologyLookupModal extends Modal {
           const entries = await etymo.search(searchTerm);
           displayEntries(entries, contentEl, searchTerm);
         } else {
-          const etymology = await fetchSpanishEtymologyDPD(searchTerm);
-          contentEl.empty();
-          if (etymology) {
-            const wordEl = contentEl.createEl('h2', { text: searchTerm });
-            wordEl.style.marginBottom = '1em';
+          const [etymDPD, etymDLE] = await Promise.all([
+            fetchSpanishEtymologyDPD(searchTerm),
+            fetchSpanishEtymologyDLE(searchTerm)
+          ]);
 
-            const etymologyEl = contentEl.createEl('div');
-            etymologyEl.style.whiteSpace = 'pre-wrap';
-            etymologyEl.setText(etymology);
-          } else {
-            contentEl.setText(`No etymology or definition found for "${searchTerm}".`);
-          }
+          contentEl.empty();
+          const wordEl = contentEl.createEl('h2', { text: searchTerm });
+          wordEl.style.marginBottom = '1em';
+
+          const dpdHeader = contentEl.createEl('h3', { text: 'Fuente: DPD (RAE)' });
+          const dpdText = contentEl.createEl('div');
+          dpdText.style.whiteSpace = 'pre-wrap';
+          dpdText.setText(etymDPD ?? 'No se ha encontrado la etimología.');
+
+          const dleHeader = contentEl.createEl('h3', { text: 'Fuente: DLE (RAE)' });
+          const dleText = contentEl.createEl('div');
+          dleText.style.whiteSpace = 'pre-wrap';
+          dleText.setText(etymDLE ?? 'No se ha encontrado la etimología.');
         }
       } catch (error) {
         contentEl.setText("Search failed. Are you connected to the internet?");
@@ -94,7 +100,6 @@ class EtymologyLookupModal extends Modal {
 async function fetchSpanishEtymologyDPD(word: string): Promise<string | null> {
   try {
     const url = `https://www.rae.es/dpd/${encodeURIComponent(word)}`;
-
     const response = await requestUrl({ url });
     if (response.status !== 200) return null;
 
@@ -118,21 +123,38 @@ async function fetchSpanishEtymologyDPD(word: string): Promise<string | null> {
 
     return null;
   } catch (error) {
-    console.error('Error fetching Spanish etymology/definition from DPD:', error);
+    console.error('Error fetching Spanish etymology from DPD:', error);
+    return null;
+  }
+}
+
+async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
+  try {
+    const url = `https://dle.rae.es/${encodeURIComponent(word)}`;
+    const response = await requestUrl({ url });
+    if (response.status !== 200) return null;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(response.text, 'text/html');
+
+    const etymDiv = doc.querySelector('div.etim');
+    if (etymDiv) {
+      return etymDiv.textContent?.trim() || null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching Spanish etymology from DLE:', error);
     return null;
   }
 }
 
 export default class EtymologyLookupPlugin extends Plugin {
   async onload() {
-    this.addRibbonIcon(
-      "sprout",
-      "Etymology Lookup",
-      () => {
-        const selection = getCurrentSelectedText(this.app);
-        this.promptAndLookup(selection);
-      }
-    );
+    this.addRibbonIcon("sprout", "Etymology Lookup", () => {
+      const selection = getCurrentSelectedText(this.app);
+      this.promptAndLookup(selection);
+    });
 
     this.addCommand({
       id: "search",
@@ -148,11 +170,9 @@ export default class EtymologyLookupPlugin extends Plugin {
         const selection = editor.getSelection();
         if (selection) {
           menu.addItem((item) => {
-            item
-              .setTitle(`Get etymology of "${ellipsis(selection, 18)}"`)
-              .onClick(() => {
-                this.promptAndLookup(selection);
-              });
+            item.setTitle(`Get etymology of \"${ellipsis(selection, 18)}\"`).onClick(() => {
+              this.promptAndLookup(selection);
+            });
           });
         }
       })
@@ -162,9 +182,7 @@ export default class EtymologyLookupPlugin extends Plugin {
   onunload() {}
 
   async promptAndLookup(selection: string | undefined) {
-    if (!selection) {
-      return;
-    }
+    if (!selection) return;
     new LanguagePromptModal(this.app, selection, (lang: 'en' | 'es') => {
       const modal = new EtymologyLookupModal(this.app, selection, lang);
       modal.open();
