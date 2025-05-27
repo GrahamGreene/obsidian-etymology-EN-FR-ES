@@ -83,10 +83,10 @@ class EtymologyLookupModal extends Modal {
 async function fetchSpanishEtymology(word: string): Promise<string | null> {
   try {
     const normalizedWord = word.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const url = `https://etimologias.dechile.net/${encodeURIComponent(normalizedWord)}`;
+    // URL corregida con query string
+    const url = `https://etimologias.dechile.net/?${encodeURIComponent(normalizedWord)}`;
 
     const response = await requestUrl({ url });
-
     if (response.status !== 200) return null;
 
     const parser = new DOMParser();
@@ -95,6 +95,7 @@ async function fetchSpanishEtymology(word: string): Promise<string | null> {
     const contenido = doc.querySelector('#contenido');
     if (!contenido) return null;
 
+    // Extraemos los párrafos con texto relevante
     const paragraphs = contenido.querySelectorAll('p');
     let etymologyText = '';
     paragraphs.forEach(p => {
