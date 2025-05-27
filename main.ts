@@ -19,7 +19,7 @@ class LanguagePromptModal extends Modal {
     const { contentEl } = this;
     contentEl.addClass('etymol-language-prompt');
     contentEl.createEl('h2', { text: 'Select Language' });
-    contentEl.createEl('p', { text: 'Buscar etimología / Search etymology' });
+    contentEl.createEl('p', { text: 'Search etymology / Buscar etimología' });
 
     const buttonContainer = contentEl.createDiv({ cls: 'etymol-button-container' });
 
@@ -157,14 +157,44 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
   }
 }
 
+function normalizeText(text: string): string {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  let normalized = textarea.value;
+
+  normalized = normalized
+    .replace(/Ã¡/g, 'á')
+    .replace(/Ã©/g, 'é')
+    .replace(/Ã­/g, 'í')
+    .replace(/Ã³/g, 'ó')
+    .replace(/Ãº/g, 'ú')
+    .replace(/Ã±/g, 'ñ')
+    .replace(/Ã/g, 'Á')
+    .replace(/Ã‰/g, 'É')
+    .replace(/Ã/g, 'Í')
+    .replace(/Ã“/g, 'Ó')
+    .replace(/Ãš/g, 'Ú')
+    .replace(/Ã‘/g, 'Ñ');
+
+  return normalized;
+}
+
+function cleanText(text: string): string {
+  return text
+    .replace(/\s+/g, ' ')         // Reemplaza múltiples espacios por uno solo
+    .replace(/(\r?\n){2,}/g, '\n\n') // Máximo dos saltos de línea seguidos
+    .trim();
+}
+
 async function fetchSpanishEtymologyDeChile(word: string): Promise<string | null> {
   try {
     const url = `https://etimologias.dechile.net/?${encodeURIComponent(word)}`;
     const response = await requestUrl({ url });
     if (response.status !== 200) return null;
 
+    const text = new TextDecoder('latin1').decode(new Uint8Array(response.arrayBuffer));
     const parser = new DOMParser();
-    const doc = parser.parseFromString(response.text, 'text/html');
+    const doc = parser.parseFromString(text, 'text/html');
 
     const h3Elements = Array.from(doc.querySelectorAll('h3'));
     let targetH3: Element | null = null;
@@ -183,7 +213,7 @@ async function fetchSpanishEtymologyDeChile(word: string): Promise<string | null
 
     while (sibling && sibling.tagName.toLowerCase() === 'p') {
       const text = sibling.textContent?.trim();
-      if (text) etymologyTexts.push(text);
+      if (text) etymologyTexts.push(cleanText(normalizeText(text)));
       sibling = sibling.nextElementSibling;
     }
 
