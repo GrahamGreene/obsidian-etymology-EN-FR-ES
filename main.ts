@@ -106,11 +106,21 @@ async function fetchSpanishEtymologyDPD(word: string): Promise<string | null> {
     const parser = new DOMParser();
     const doc = parser.parseFromString(response.text, 'text/html');
 
-    // En el DPD, la etimología suele estar en div.n2.c-text-intro
-    const etimDiv = doc.querySelector('div.n2.c-text-intro');
-    if (etimDiv) {
-      return etimDiv.textContent?.trim() || null;
+    const sections = Array.from(doc.querySelectorAll('section'));
+    for (const section of sections) {
+      const header = section.querySelector('h2');
+      if (header && header.textContent?.trim().toLowerCase() === 'etimología') {
+        const etimologyText = section.textContent?.replace(/^etimología\s*/i, '').trim();
+        if (etimologyText) return etimologyText;
+      }
     }
+
+    const firstSenseP = doc.querySelector('p[data-heading="sense"]');
+    if (firstSenseP) {
+      const text = firstSenseP.textContent?.trim();
+      if (text) return text;
+    }
+
     return null;
   } catch (error) {
     console.error('Error fetching Spanish etymology from DPD:', error);
@@ -127,7 +137,6 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
     const parser = new DOMParser();
     const doc = parser.parseFromString(response.text, 'text/html');
 
-    // En el DLE, buscar dentro del primer section.c-section un div.n2.c-text-intro
     const section = doc.querySelector('section.c-section');
     if (section) {
       const etimDiv = section.querySelector('div.n2.c-text-intro');
