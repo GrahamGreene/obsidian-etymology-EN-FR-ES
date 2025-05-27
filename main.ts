@@ -59,11 +59,11 @@ class EtymologyLookupModal extends Modal {
           const entries = await etymo.search(searchTerm);
           displayEntries(entries, contentEl, searchTerm);
         } else {
-          const etymology = await fetchSpanishEtymology(searchTerm);
+          const etymology = await fetchSpanishEtymologyDPD(searchTerm);
           if (etymology) {
             contentEl.setText(etymology);
           } else {
-            contentEl.setText(`No etymology found for "${searchTerm}".`);
+            contentEl.setText(`No etymology or definition found for "${searchTerm}".`);
           }
         }
       } catch (error) {
@@ -80,11 +80,9 @@ class EtymologyLookupModal extends Modal {
   }
 }
 
-async function fetchSpanishEtymology(word: string): Promise<string | null> {
+async function fetchSpanishEtymologyDPD(word: string): Promise<string | null> {
   try {
-    const normalizedWord = word.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    // URL corregida: el término va como query string en "q"
-    const url = `https://etimologias.dechile.net/?q=${encodeURIComponent(normalizedWord)}`;
+    const url = `https://www.rae.es/dpd/${encodeURIComponent(word)}`;
 
     const response = await requestUrl({ url });
     if (response.status !== 200) return null;
@@ -92,24 +90,26 @@ async function fetchSpanishEtymology(word: string): Promise<string | null> {
     const parser = new DOMParser();
     const doc = parser.parseFromString(response.text, 'text/html');
 
-    const contenido = doc.querySelector('#contenido');
-    if (!contenido) return null;
-
-    // Extraemos los párrafos que contienen la etimología
-    const paragraphs = contenido.querySelectorAll('p');
-    let etymologyText = '';
-    paragraphs.forEach(p => {
-      const text = p.textContent?.trim();
-      if (text && text.length > 40) {
-        etymologyText += text + '\n\n';
+    // Buscar sección "Etimología"
+    const sections = Array.from(doc.querySelectorAll('section'));
+    for (const section of sections) {
+      const header = section.querySelector('h2');
+      if (header && header.textContent?.trim().toLowerCase() === 'etimología') {
+        const etimologyText = section.textContent?.replace(/^etimología\s*/i, '').trim();
+        if (etimologyText) return etimologyText;
       }
-    });
+    }
 
-    if (etymologyText.length === 0) return null;
+    // Si no hay etimología, obtener primer párrafo con definición relevante
+    const firstSenseP = doc.querySelector('p[data-heading="sense"]');
+    if (firstSenseP) {
+      const text = firstSenseP.textContent?.trim();
+      if (text) return text;
+    }
 
-    return etymologyText.trim();
+    return null;
   } catch (error) {
-    console.error('Error fetching Spanish etymology:', error);
+    console.error('Error fetching Spanish etymology/definition from DPD:', error);
     return null;
   }
 }
