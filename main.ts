@@ -22,11 +22,16 @@ class LanguagePromptModal extends Modal {
     contentEl.createEl('p', { text: `Look up etymology for "${this.selection || 'unknown'}" in:` });
 
     const buttonContainer = contentEl.createDiv({ cls: 'etymol-button-container' });
-    buttonContainer.createEl('button', { text: 'English' }).addEventListener('click', () => {
+
+    const englishButton = buttonContainer.createEl('button', { text: 'English' });
+    englishButton.style.marginRight = '12px';
+    englishButton.addEventListener('click', () => {
       this.onSubmit('en');
       this.close();
     });
-    buttonContainer.createEl('button', { text: 'Spanish' }).addEventListener('click', () => {
+
+    const spanishButton = buttonContainer.createEl('button', { text: 'Español' });
+    spanishButton.addEventListener('click', () => {
       this.onSubmit('es');
       this.close();
     });
@@ -90,7 +95,6 @@ async function fetchSpanishEtymologyDPD(word: string): Promise<string | null> {
     const parser = new DOMParser();
     const doc = parser.parseFromString(response.text, 'text/html');
 
-    // Buscar sección "Etimología"
     const sections = Array.from(doc.querySelectorAll('section'));
     for (const section of sections) {
       const header = section.querySelector('h2');
@@ -100,7 +104,6 @@ async function fetchSpanishEtymologyDPD(word: string): Promise<string | null> {
       }
     }
 
-    // Si no hay etimología, obtener primer párrafo con definición relevante
     const firstSenseP = doc.querySelector('p[data-heading="sense"]');
     if (firstSenseP) {
       const text = firstSenseP.textContent?.trim();
@@ -168,13 +171,10 @@ function getCurrentSelectedText(app: App): string {
   const editor = app.workspace.activeEditor?.editor;
   if (editor) {
     const selection = editor.getSelection();
-    if (typeof selection === 'string' && selection.trim().length > 0) {
+    if (typeof selection === 'string' && selection.trim()) {
       return selection.trim();
     }
   }
-  const selection = document.getSelection();
-  if (selection && typeof selection.toString === 'function') {
-    return selection.toString().trim();
-  }
-  return '';
+  const selection = document.getSelection()?.toString();
+  return (selection && selection.trim()) || '';
 }
