@@ -87,21 +87,25 @@ class EtymologyLookupModal extends Modal {
         const wordEl = contentEl.createEl("h2", { text: searchTerm });
         wordEl.style.marginBottom = "1em";
 
+        // @ts-ignore // Header for definition display
         const definitionHeader = contentEl.createEl("h3", { text: "Definición: DLE (RAE)" });
         const definitionText = contentEl.createEl("div");
         definitionText.style.whiteSpace = "pre-wrap";
         definitionText.setText(definitionDLE ?? "No se ha encontrado la definición.");
 
+        // @ts-ignore // Header for DPD etymology display
         const dpdHeader = contentEl.createEl("h3", { text: "Fuente: DPD (RAE)" });
         const dpdText = contentEl.createEl("div");
         dpdText.style.whiteSpace = "pre-wrap";
         dpdText.setText(etymDPD ?? "No se ha encontrado la etimología.");
 
+        // @ts-ignore // Header for DLE etymology display
         const dleHeader = contentEl.createEl("h3", { text: "Fuente: DLE (RAE)" });
         const dleText = contentEl.createEl("div");
         dleText.style.whiteSpace = "pre-wrap";
         dleText.setText(etymDLE ?? "No se ha encontrado la etimología.");
 
+        // @ts-ignore // Header for DeChile etymology display
         const deChileHeader = contentEl.createEl("h3", { text: "Fuente: Diccionario Etimológico de Chile" });
         const deChileText = contentEl.createEl("div");
         deChileText.style.whiteSpace = "pre-wrap";
@@ -116,11 +120,13 @@ class EtymologyLookupModal extends Modal {
         const wordEl = contentEl.createEl("h2", { text: searchTerm });
         wordEl.style.marginBottom = "1em";
 
+        // @ts-ignore // Header for Wiktionary etymology display
         const wiktionaryHeader = contentEl.createEl("h3", { text: "Source: Wiktionnaire" });
         const wiktionaryText = contentEl.createEl("div");
         wiktionaryText.style.whiteSpace = "pre-wrap";
         wiktionaryText.setText(etymWiktionary ?? "Aucune étymologie trouvée.");
 
+        // @ts-ignore // Header for CNRTL etymology display
         const cnrtlHeader = contentEl.createEl("h3", { text: "Source: CNRTL" });
         const cnrtlText = contentEl.createEl("div");
         cnrtlText.style.whiteSpace = "pre-wrap";
@@ -186,7 +192,7 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
     }
     return null;
   } catch (error) {
-    console$error("Error fetching Spanish etymology from DLE:", error);
+    console.error("Error fetching Spanish etymology from DLE:", error);
     return null;
   }
 }
