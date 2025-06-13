@@ -76,15 +76,21 @@ class EtymologyLookupModal extends Modal {
         const entries = await etymo.search(searchTerm);
         displayEntries(entries, contentEl, searchTerm);
       } else if (this.lang === "es") {
-        const [etymDPD, etymDLE, etymDeChile] = await Promise.all([
+        const [etymDPD, etymDLE, etymDeChile, definitionDLE] = await Promise.all([
           fetchSpanishEtymologyDPD(searchTerm),
           fetchSpanishEtymologyDLE(searchTerm),
           fetchSpanishEtymologyDeChile(searchTerm),
+          fetchSpanishDefinitionDLE(searchTerm),
         ]);
 
         contentEl.empty();
         const wordEl = contentEl.createEl("h2", { text: searchTerm });
         wordEl.style.marginBottom = "1em";
+
+        const definitionHeader = contentEl.createEl("h3", { text: "Definición: DLE (RAE)" });
+        const definitionText = contentEl.createEl("div");
+        definitionText.style.whiteSpace = "pre-wrap";
+        definitionText.setText(definitionDLE ?? "No se ha encontrado la definición.");
 
         const dpdHeader = contentEl.createEl("h3", { text: "Fuente: DPD (RAE)" });
         const dpdText = contentEl.createEl("div");
@@ -180,7 +186,37 @@ async function fetchSpanishEtymologyDLE(word: string): Promise<string | null> {
     }
     return null;
   } catch (error) {
-    console.error("Error fetching Spanish etymology from DLE:", error);
+    console$error("Error fetching Spanish etymology from DLE:", error);
+    return null;
+  }
+}
+
+async function fetchSpanishDefinitionDLE(word: string): Promise<string | null> {
+  try {
+    const url = `https://dle.rae.es/${encodeURIComponent(word)}`;
+    const response = await requestUrl({ url });
+    if (response.status !== 200) return null;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(response.text, "text/html");
+
+    const definitionsList = doc.querySelector("ol.c-definitions");
+    if (!definitionsList) return null;
+
+    const definitions: string[] = [];
+    const items = definitionsList.querySelectorAll("li.c-definitions__item");
+    items.forEach((item, index) => {
+      const definitionText = item.querySelector("div")?.textContent?.trim();
+      if (definitionText) {
+        // Remove the leading number and part of speech (e.g., "1. adj.")
+        const cleanDefinition = definitionText.replace(/^\d+\.\s*\w+\.\s*/, "").trim();
+        definitions.push(`${index + 1}. ${cleanDefinition}`);
+      }
+    });
+
+    return definitions.length > 0 ? cleanText(normalizeText(definitions.join("\n"))) : null;
+  } catch (error) {
+    console.error("Error fetching Spanish definition from DLE:", error);
     return null;
   }
 }
@@ -294,7 +330,7 @@ function normalizeText(text: string): string {
     .replace(/Ã­/g, "í")
     .replace(/Ã³/g, "ó")
     .replace(/Ãº/g, "ú")
-    .replace(/Ãñ/g, "ñ")
+    .replace(/Ã±/g, "ñ")
     .replace(/Ã/g, "Á")
     .replace(/Ã‰/g, "É")
     .replace(/Ã/g, "Í")
